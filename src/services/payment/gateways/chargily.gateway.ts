@@ -16,13 +16,14 @@ type ChargilyMode = "EDAHABIA" | "CIB";
  * Docs: https://dev.chargily.com/pay-v2/
  */
 export class ChargilyGateway implements IPaymentGateway {
-  private baseUrl = "https://pay.chargily.net/api/v2";
+  private baseUrl: string;
   private apiKey: string;
   private secret: string;
   private mode: ChargilyMode;
 
   constructor(mode: ChargilyMode) {
     this.mode = mode;
+    this.baseUrl = config.chargily.baseUrl;
     this.apiKey = config.chargily.apiKey;
     this.secret = config.chargily.secretKey;
   }
@@ -72,13 +73,19 @@ export class ChargilyGateway implements IPaymentGateway {
     const signature = headers["signature"] || headers["Signature"];
     const payload = typeof body === "string" ? body : body.toString("utf8");
 
-    // Verify HMAC signature
+    // Verify HMAC signature with timing-safe comparison
+    if (!signature) {
+      throw new Error("Missing Chargily webhook signature");
+    }
+
     const computed = crypto
       .createHmac("sha256", this.secret)
       .update(payload)
       .digest("hex");
 
-    if (computed !== signature) {
+    const computedBuf = Buffer.from(computed, "utf8");
+    const signatureBuf = Buffer.from(signature, "utf8");
+    if (computedBuf.length !== signatureBuf.length || !crypto.timingSafeEqual(computedBuf, signatureBuf)) {
       throw new Error("Invalid Chargily webhook signature");
     }
 

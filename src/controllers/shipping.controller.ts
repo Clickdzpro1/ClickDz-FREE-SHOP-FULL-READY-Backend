@@ -28,7 +28,7 @@ export const createShipment = asyncHandler(async (req: Request, res: Response) =
 
 export const trackShipment = asyncHandler(async (req: Request, res: Response) => {
   const { orderId } = req.params;
-  const result = await shippingService.track(orderId);
+  const result = await shippingService.track(orderId, req.user!.userId);
   res.json(success(result));
 });
 

@@ -12,7 +12,7 @@ export const initiatePayment = asyncHandler(async (req: Request, res: Response) 
 
 export const getPaymentStatus = asyncHandler(async (req: Request, res: Response) => {
   const { orderId } = req.params;
-  const result = await paymentService.checkStatus(orderId);
+  const result = await paymentService.checkStatus(orderId, req.user!.userId);
   res.json(success(result));
 });
 
@@ -47,7 +47,7 @@ export const chargilyWebhook = asyncHandler(async (req: Request, res: Response) 
 
 export const slickpayWebhook = asyncHandler(async (req: Request, res: Response) => {
   const result = await paymentService.handleWebhook(
-    "SLICKPAY" as PaymentMethodKey,
+    "SLICKPAY_EDAHABIA" as PaymentMethodKey,
     req.body as Buffer,
     req.headers as Record<string, string>
   );

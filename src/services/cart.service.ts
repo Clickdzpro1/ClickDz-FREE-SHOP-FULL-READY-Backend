@@ -48,18 +48,7 @@ export class CartService {
     const product = await prisma.product.findUnique({ where: { id: data.productId } });
     if (!product || !product.isActive) throw new AppError("Product not found", 404);
 
-    // Check stock
-    if (data.variantId) {
-      const variant = await prisma.productVariant.findUnique({ where: { id: data.variantId } });
-      if (!variant || !variant.isActive) throw new AppError("Variant not found", 404);
-      if (variant.stock < data.quantity) throw new AppError("Insufficient stock", 400);
-    } else {
-      if (product.trackInventory && product.stock < data.quantity) {
-        throw new AppError("Insufficient stock", 400);
-      }
-    }
-
-    // Upsert cart item
+    // Find existing cart item for this product+variant
     const existing = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
@@ -68,10 +57,32 @@ export class CartService {
       },
     });
 
+    // Calculate total quantity (existing + new)
+    const totalQuantity = (existing?.quantity || 0) + data.quantity;
+
+    // Check stock against TOTAL quantity (cumulative check)
+    if (data.variantId) {
+      const variant = await prisma.productVariant.findUnique({ where: { id: data.variantId } });
+      if (!variant || !variant.isActive) throw new AppError("Variant not found", 404);
+      if (variant.stock < totalQuantity) {
+        throw new AppError(
+          `Insufficient stock. Available: ${variant.stock}, requested total: ${totalQuantity}`,
+          400
+        );
+      }
+    } else {
+      if (product.trackInventory && product.stock < totalQuantity) {
+        throw new AppError(
+          `Insufficient stock. Available: ${product.stock}, requested total: ${totalQuantity}`,
+          400
+        );
+      }
+    }
+
     if (existing) {
       await prisma.cartItem.update({
         where: { id: existing.id },
-        data: { quantity: existing.quantity + data.quantity },
+        data: { quantity: totalQuantity },
       });
     } else {
       await prisma.cartItem.create({
@@ -99,7 +110,7 @@ export class CartService {
     // Check stock
     const available = item.variant ? item.variant.stock : item.product.stock;
     if (item.product.trackInventory && quantity > available) {
-      throw new AppError("Insufficient stock", 400);
+      throw new AppError(`Insufficient stock. Available: ${available}`, 400);
     }
 
     await prisma.cartItem.update({

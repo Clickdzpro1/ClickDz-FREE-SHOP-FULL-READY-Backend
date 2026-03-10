@@ -69,9 +69,32 @@ export class SlickPayGateway implements IPaymentGateway {
 
   async handleWebhook(body: Buffer | string, headers: Record<string, string>): Promise<WebhookResult> {
     const payload = typeof body === "string" ? body : body.toString("utf8");
+
+    // Verify webhook signature using HMAC-SHA256
+    const signature = headers["signature"] || headers["Signature"] || headers["x-slickpay-signature"];
+    if (!signature) {
+      throw new Error("Missing SlickPay webhook signature");
+    }
+
+    const privateKey = config.slickpay.privateKey;
+    if (!privateKey) {
+      throw new Error("SlickPay private key not configured — cannot verify webhook");
+    }
+
+    const computed = crypto
+      .createHmac("sha256", privateKey)
+      .update(payload)
+      .digest("hex");
+
+    // Timing-safe comparison to prevent timing attacks
+    const computedBuf = Buffer.from(computed, "utf8");
+    const signatureBuf = Buffer.from(signature, "utf8");
+    if (computedBuf.length !== signatureBuf.length || !crypto.timingSafeEqual(computedBuf, signatureBuf)) {
+      throw new Error("Invalid SlickPay webhook signature");
+    }
+
     const event = JSON.parse(payload);
 
-    // SlickPay sends invoice status updates
     return {
       orderId: event.metadata?.order_id || event.order_id,
       gatewayId: event.id?.toString() || event.invoice_number,

@@ -25,8 +25,8 @@ FROM node:20-alpine AS production
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Add tini for proper PID 1 handling
-RUN apk add --no-cache tini
+# Add tini for proper PID 1 handling + curl for health checks
+RUN apk add --no-cache tini curl
 
 WORKDIR /app
 
@@ -51,6 +51,10 @@ RUN mkdir -p uploads && chown -R node:node /app
 USER node
 
 EXPOSE 3000
+
+# Health check — matches the /health endpoint in app.ts
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["./entrypoint.sh"]

@@ -2,8 +2,32 @@ node_modules
 dist
 .env
 .env.local
+.env.*.local
 .git
 .github
+.vscode
+.idea
+
+# Docs (not needed in container)
 *.md
+!README.md
+docs/
+
+# Uploads (mounted as volume)
 uploads/*
 !uploads/.gitkeep
+
+# Test / coverage
+coverage/
+*.test.ts
+jest.config.*
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/

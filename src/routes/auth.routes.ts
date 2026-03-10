@@ -7,6 +7,8 @@ import {
   refreshTokenSchema,
   changePasswordSchema,
   updateProfileSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from "../schemas/auth.schema";
 
 const router = Router();
@@ -19,5 +21,7 @@ router.post("/logout-all", authenticate, ctrl.logoutAll);
 router.get("/profile", authenticate, ctrl.getProfile);
 router.patch("/profile", authenticate, validate(updateProfileSchema), ctrl.updateProfile);
 router.post("/change-password", authenticate, validate(changePasswordSchema), ctrl.changePassword);
+router.post("/forgot-password", authRateLimit, validate(forgotPasswordSchema), ctrl.forgotPassword);
+router.post("/reset-password", authRateLimit, validate(resetPasswordSchema), ctrl.resetPassword);
 
 export default router;

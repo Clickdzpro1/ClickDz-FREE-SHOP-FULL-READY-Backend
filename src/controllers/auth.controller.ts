@@ -42,3 +42,14 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   await authService.changePassword(req.user!.userId, req.body);
   res.json(success(null, "Password changed successfully"));
 });
+
+export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  await authService.forgotPassword(req.body.email);
+  // Always return success to prevent email enumeration
+  res.json(success(null, "If an account with that email exists, a password reset link has been sent"));
+});
+
+export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+  await authService.resetPassword(req.body.token, req.body.password);
+  res.json(success(null, "Password has been reset successfully"));
+});

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { Prisma } from "@prisma/client";
 import { logger } from "../config/logger";
 import { error } from "../utils/apiResponse";
 
@@ -39,18 +40,41 @@ export function errorHandler(
     return;
   }
 
-  // Prisma known errors
-  if (err.constructor.name === "PrismaClientKnownRequestError") {
-    const prismaError = err as unknown as { code: string; meta?: { target?: string[] } };
-    if (prismaError.code === "P2002") {
-      const field = prismaError.meta?.target?.[0] || "field";
+  // Prisma known request errors (proper import-based detection)
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === "P2002") {
+      const target = err.meta?.target;
+      const field = Array.isArray(target) ? target[0] : "field";
       res.status(409).json(error(`A record with this ${field} already exists`, 409));
       return;
     }
-    if (prismaError.code === "P2025") {
+    if (err.code === "P2025") {
       res.status(404).json(error("Record not found", 404));
       return;
     }
+    if (err.code === "P2003") {
+      res.status(400).json(error("Related record not found (foreign key constraint)", 400));
+      return;
+    }
+    if (err.code === "P2014") {
+      res.status(400).json(error("Invalid data: required relation violation", 400));
+      return;
+    }
+  }
+
+  // Prisma validation error
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    const message = process.env.NODE_ENV === "production"
+      ? "Invalid data provided"
+      : err.message;
+    res.status(400).json(error(message, 400));
+    return;
+  }
+
+  // Zod validation errors (from middleware)
+  if (err.name === "ZodError") {
+    res.status(400).json(error("Validation error", 400));
+    return;
   }
 
   // JWT errors
@@ -60,6 +84,17 @@ export function errorHandler(
   }
   if (err.name === "TokenExpiredError") {
     res.status(401).json(error("Token expired", 401));
+    return;
+  }
+
+  // Multer file upload errors
+  if (err.name === "MulterError") {
+    const multerErr = err as any;
+    if (multerErr.code === "LIMIT_FILE_SIZE") {
+      res.status(400).json(error("File too large", 400));
+      return;
+    }
+    res.status(400).json(error(`Upload error: ${multerErr.message}`, 400));
     return;
   }
 

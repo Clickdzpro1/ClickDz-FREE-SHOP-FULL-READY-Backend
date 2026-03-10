@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/clickdz_test?schema=public
+  REDIS_URL: redis://localhost:6379
+  JWT_SECRET: ci-test-jwt-secret-at-least-32-characters-long
+  JWT_REFRESH_SECRET: ci-test-jwt-refresh-secret-at-least-32-chars
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -48,6 +55,18 @@ jobs:
         with:
           version: latest
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install
 
@@ -55,12 +74,13 @@ jobs:
         run: npx prisma generate
 
       - name: Run migrations
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/clickdz_test?schema=public
         run: npx prisma migrate deploy
 
-      - name: Build
+      - name: TypeScript check
         run: pnpm build
 
       - name: Lint
-        run: pnpm lint || true
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test --passWithNoTests

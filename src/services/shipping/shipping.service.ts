@@ -92,13 +92,20 @@ export class ShippingService {
 
   /**
    * Track a shipment.
+   * userId is optional — if provided, verifies order ownership.
    */
-  async track(orderId: string) {
+  async track(orderId: string, userId?: string) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
     });
 
     if (!order) throw new AppError("Order not found", 404);
+
+    // Verify ownership if userId is provided (customer endpoint)
+    if (userId && order.userId !== userId) {
+      throw new AppError("Order not found", 404);
+    }
+
     if (!order.trackingNumber || !order.shippingProvider) {
       throw new AppError("No shipment found for this order", 404);
     }

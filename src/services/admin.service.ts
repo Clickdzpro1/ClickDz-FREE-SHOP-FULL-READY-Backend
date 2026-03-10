@@ -270,7 +270,14 @@ export class AdminService {
     const csvLines = [
       headers.join(","),
       ...rows.map((r) =>
-        r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+        r.map((cell) => {
+          let safe = String(cell).replace(/"/g, '""');
+          // Prevent CSV injection: prefix formula-triggering chars with a single quote
+          if (/^[=+\-@\t\r]/.test(safe)) {
+            safe = `'${safe}`;
+          }
+          return `"${safe}"`;
+        }).join(",")
       ),
     ];
 

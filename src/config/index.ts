@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+const isProduction = process.env.NODE_ENV === "production";
+
 function required(key: string): string {
   const val = process.env[key];
   if (!val) throw new Error(`Missing required env var: ${key}`);
@@ -11,12 +13,25 @@ function optional(key: string, fallback: string): string {
   return process.env[key] || fallback;
 }
 
+/**
+ * Required in production, falls back to dev default otherwise.
+ */
+function requiredInProd(key: string, devDefault: string): string {
+  const val = process.env[key];
+  if (!val && isProduction) {
+    throw new Error(`Missing required env var in production: ${key}`);
+  }
+  return val || devDefault;
+}
+
 export const config = {
   app: {
     nodeEnv: optional("NODE_ENV", "development"),
+    isProduction,
     port: parseInt(optional("PORT", "3000"), 10),
     baseUrl: optional("APP_BASE_URL", "http://localhost:3000"),
     frontendUrl: optional("FRONTEND_URL", "http://localhost:3001"),
+    corsOrigins: optional("CORS_ORIGINS", "http://localhost:3001"),
     storeName: optional("STORE_NAME", "ClickDz Store"),
     storePhone: optional("STORE_PHONE", ""),
     storeAddress: optional("STORE_ADDRESS", ""),
@@ -32,8 +47,8 @@ export const config = {
   },
 
   jwt: {
-    accessSecret: optional("JWT_SECRET", "dev-access-secret-change-me-32chars!"),
-    refreshSecret: optional("JWT_REFRESH_SECRET", "dev-refresh-secret-change-me-32chars"),
+    accessSecret: requiredInProd("JWT_SECRET", "dev-access-secret-change-me-32chars!"),
+    refreshSecret: requiredInProd("JWT_REFRESH_SECRET", "dev-refresh-secret-change-me-32chars"),
     accessExpiresIn: optional("JWT_ACCESS_EXPIRES_IN", "15m"),
     refreshExpiresIn: optional("JWT_REFRESH_EXPIRES_IN", "7d"),
   },
@@ -97,6 +112,6 @@ export const config = {
 
   admin: {
     email: optional("ADMIN_EMAIL", "admin@clickdz.com"),
-    password: optional("ADMIN_PASSWORD", "ChangeMe123!"),
+    password: requiredInProd("ADMIN_PASSWORD", "ChangeMe123!"),
   },
 };

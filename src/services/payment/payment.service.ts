@@ -122,8 +122,9 @@ export class PaymentService {
 
   /**
    * Check payment status from gateway.
+   * userId is optional — if provided, verifies the order belongs to that user.
    */
-  async checkStatus(orderId: string) {
+  async checkStatus(orderId: string, userId?: string) {
     const payment = await prisma.payment.findUnique({
       where: { orderId },
       include: { order: true },
@@ -131,8 +132,13 @@ export class PaymentService {
 
     if (!payment) throw new AppError("Payment not found", 404);
 
+    // Verify ownership if userId is provided (customer endpoint)
+    if (userId && payment.order.userId !== userId) {
+      throw new AppError("Payment not found", 404);
+    }
+
     // For manual methods, return DB status
-    if (["CCP", "BARIDIMOB", "COD"].includes(payment.method)) {
+    if (["CCP_BARIDIMOB", "COD"].includes(payment.method)) {
       return {
         orderId: payment.orderId,
         method: payment.method,
@@ -189,7 +195,7 @@ export class PaymentService {
     });
 
     if (!payment) throw new AppError("Payment not found", 404);
-    if (!["CCP", "BARIDIMOB"].includes(payment.method)) {
+    if (payment.method !== "CCP_BARIDIMOB") {
       throw new AppError("Only CCP/BaridiMob payments can be manually confirmed", 400);
     }
     if (payment.status === "PAID") {
