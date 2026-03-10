@@ -1,0 +1,71 @@
+// All Algerian Wilayas — 58 official wilayas (48 original + 10 added in 2019)
+// To add more divisions, simply add entries to this array.
+
+export interface WilayaData {
+  id: number;
+  nameAr: string;
+  nameFr: string;
+  nameEn: string;
+}
+
+export const wilayas: WilayaData[] = [
+  { id: 1, nameAr: "أدرار", nameFr: "Adrar", nameEn: "Adrar" },
+  { id: 2, nameAr: "الشلف", nameFr: "Chlef", nameEn: "Chlef" },
+  { id: 3, nameAr: "الأغواط", nameFr: "Laghouat", nameEn: "Laghouat" },
+  { id: 4, nameAr: "أم البواقي", nameFr: "Oum El Bouaghi", nameEn: "Oum El Bouaghi" },
+  { id: 5, nameAr: "باتنة", nameFr: "Batna", nameEn: "Batna" },
+  { id: 6, nameAr: "بجاية", nameFr: "Béjaïa", nameEn: "Bejaia" },
+  { id: 7, nameAr: "بسكرة", nameFr: "Biskra", nameEn: "Biskra" },
+  { id: 8, nameAr: "بشار", nameFr: "Béchar", nameEn: "Bechar" },
+  { id: 9, nameAr: "البليدة", nameFr: "Blida", nameEn: "Blida" },
+  { id: 10, nameAr: "البويرة", nameFr: "Bouira", nameEn: "Bouira" },
+  { id: 11, nameAr: "تمنراست", nameFr: "Tamanrasset", nameEn: "Tamanrasset" },
+  { id: 12, nameAr: "تبسة", nameFr: "Tébessa", nameEn: "Tebessa" },
+  { id: 13, nameAr: "تلمسان", nameFr: "Tlemcen", nameEn: "Tlemcen" },
+  { id: 14, nameAr: "تيارت", nameFr: "Tiaret", nameEn: "Tiaret" },
+  { id: 15, nameAr: "تيزي وزو", nameFr: "Tizi Ouzou", nameEn: "Tizi Ouzou" },
+  { id: 16, nameAr: "الجزائر", nameFr: "Alger", nameEn: "Algiers" },
+  { id: 17, nameAr: "الجلفة", nameFr: "Djelfa", nameEn: "Djelfa" },
+  { id: 18, nameAr: "جيجل", nameFr: "Jijel", nameEn: "Jijel" },
+  { id: 19, nameAr: "سطيف", nameFr: "Sétif", nameEn: "Setif" },
+  { id: 20, nameAr: "سعيدة", nameFr: "Saïda", nameEn: "Saida" },
+  { id: 21, nameAr: "سكيكدة", nameFr: "Skikda", nameEn: "Skikda" },
+  { id: 22, nameAr: "سيدي بلعباس", nameFr: "Sidi Bel Abbès", nameEn: "Sidi Bel Abbes" },
+  { id: 23, nameAr: "عنابة", nameFr: "Annaba", nameEn: "Annaba" },
+  { id: 24, nameAr: "قالمة", nameFr: "Guelma", nameEn: "Guelma" },
+  { id: 25, nameAr: "قسنطينة", nameFr: "Constantine", nameEn: "Constantine" },
+  { id: 26, nameAr: "المدية", nameFr: "Médéa", nameEn: "Medea" },
+  { id: 27, nameAr: "مستغانم", nameFr: "Mostaganem", nameEn: "Mostaganem" },
+  { id: 28, nameAr: "المسيلة", nameFr: "M'Sila", nameEn: "M'Sila" },
+  { id: 29, nameAr: "معسكر", nameFr: "Mascara", nameEn: "Mascara" },
+  { id: 30, nameAr: "ورقلة", nameFr: "Ouargla", nameEn: "Ouargla" },
+  { id: 31, nameAr: "وهران", nameFr: "Oran", nameEn: "Oran" },
+  { id: 32, nameAr: "البيض", nameFr: "El Bayadh", nameEn: "El Bayadh" },
+  { id: 33, nameAr: "إليزي", nameFr: "Illizi", nameEn: "Illizi" },
+  { id: 34, nameAr: "برج بوعريريج", nameFr: "Bordj Bou Arréridj", nameEn: "Bordj Bou Arreridj" },
+  { id: 35, nameAr: "بومرداس", nameFr: "Boumerdès", nameEn: "Boumerdes" },
+  { id: 36, nameAr: "الطارف", nameFr: "El Tarf", nameEn: "El Tarf" },
+  { id: 37, nameAr: "تندوف", nameFr: "Tindouf", nameEn: "Tindouf" },
+  { id: 38, nameAr: "تيسمسيلت", nameFr: "Tissemsilt", nameEn: "Tissemsilt" },
+  { id: 39, nameAr: "الوادي", nameFr: "El Oued", nameEn: "El Oued" },
+  { id: 40, nameAr: "خنشلة", nameFr: "Khenchela", nameEn: "Khenchela" },
+  { id: 41, nameAr: "سوق أهراس", nameFr: "Souk Ahras", nameEn: "Souk Ahras" },
+  { id: 42, nameAr: "تيبازة", nameFr: "Tipaza", nameEn: "Tipaza" },
+  { id: 43, nameAr: "ميلة", nameFr: "Mila", nameEn: "Mila" },
+  { id: 44, nameAr: "عين الدفلى", nameFr: "Aïn Defla", nameEn: "Ain Defla" },
+  { id: 45, nameAr: "النعامة", nameFr: "Naâma", nameEn: "Naama" },
+  { id: 46, nameAr: "عين تيموشنت", nameFr: "Aïn Témouchent", nameEn: "Ain Temouchent" },
+  { id: 47, nameAr: "غرداية", nameFr: "Ghardaïa", nameEn: "Ghardaia" },
+  { id: 48, nameAr: "غليزان", nameFr: "Relizane", nameEn: "Relizane" },
+  // New wilayas added in 2019
+  { id: 49, nameAr: "تيميمون", nameFr: "Timimoun", nameEn: "Timimoun" },
+  { id: 50, nameAr: "برج باجي مختار", nameFr: "Bordj Badji Mokhtar", nameEn: "Bordj Badji Mokhtar" },
+  { id: 51, nameAr: "أولاد جلال", nameFr: "Ouled Djellal", nameEn: "Ouled Djellal" },
+  { id: 52, nameAr: "بني عباس", nameFr: "Béni Abbès", nameEn: "Beni Abbes" },
+  { id: 53, nameAr: "عين صالح", nameFr: "In Salah", nameEn: "In Salah" },
+  { id: 54, nameAr: "عين قزام", nameFr: "In Guezzam", nameEn: "In Guezzam" },
+  { id: 55, nameAr: "توقرت", nameFr: "Touggourt", nameEn: "Touggourt" },
+  { id: 56, nameAr: "جانت", nameFr: "Djanet", nameEn: "Djanet" },
+  { id: 57, nameAr: "المغير", nameFr: "El M'Ghair", nameEn: "El Mghair" },
+  { id: 58, nameAr: "المنيعة", nameFr: "El Meniaa", nameEn: "El Meniaa" },
+];
