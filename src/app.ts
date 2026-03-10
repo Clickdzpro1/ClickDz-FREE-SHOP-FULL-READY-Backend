@@ -5,8 +5,10 @@ import morgan from "morgan";
 import compression from "compression";
 import path from "path";
 import fs from "fs";
+import swaggerUi from "swagger-ui-express";
 import { config } from "./config";
 import { morganStream } from "./config/logger";
+import { swaggerSpec } from "./config/swagger";
 import { requestId } from "./middleware/requestId";
 import { locale } from "./middleware/locale";
 import { rateLimit } from "./middleware/rateLimiter";
@@ -78,12 +80,22 @@ app.use("/uploads", express.static(uploadDir, {
   index: false,
 }));
 
+// Swagger API documentation
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: "ClickDz FREE SHOP API Docs",
+  customCss: ".swagger-ui .topbar { display: none }",
+}));
+app.get("/api/docs.json", (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
 // Health check
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || "1.0.0",
+    version: process.env.npm_package_version || "2.0.0",
   });
 });
 

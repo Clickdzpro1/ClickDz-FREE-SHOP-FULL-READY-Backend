@@ -6,3 +6,4 @@ export { errorHandler, notFound, AppError } from "./errorHandler";
 export { requestId } from "./requestId";
 export { locale } from "./locale";
 export { uploadSingle, uploadMultiple, uploadProof } from "./upload";
+export { auditLog } from "./auditLog";

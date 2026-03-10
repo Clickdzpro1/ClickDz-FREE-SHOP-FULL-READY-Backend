@@ -74,6 +74,20 @@ model User {
   reviews       Review[]
   refreshTokens RefreshToken[]
 
+  // New feature relations
+  wishlist        Wishlist?
+  notifications   Notification[]
+  stockAlerts     StockAlert[]
+  socialAccounts  SocialAccount[]
+  twoFactorAuth   TwoFactorAuth?
+  returnRequests  ReturnRequest[]
+  giftCardsPurchased GiftCard[] @relation("GiftCardPurchaser")
+  giftCardsRedeemed  GiftCard[] @relation("GiftCardRedeemer")
+  loyaltyAccount  LoyaltyAccount?
+  subscriptions   Subscription[]
+  vendor          Vendor?
+  webhookEndpoints WebhookEndpoint[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -178,6 +192,13 @@ model Product {
   cartItems  CartItem[]
   orderItems OrderItem[]
 
+  // New feature relations
+  wishlistItems  WishlistItem[]
+  stockAlerts    StockAlert[]
+  bundleItems    BundleItem[]
+  subscriptions  Subscription[]
+  vendorProducts VendorProduct[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -211,8 +232,10 @@ model ProductVariant {
   productId  String  @map("product_id")
   product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  cartItems  CartItem[]
-  orderItems OrderItem[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  stockAlerts   StockAlert[]
+  subscriptions Subscription[]
 
   @@index([productId])
   @@map("product_variants")
@@ -314,9 +337,10 @@ model Order {
   customerNote    String?     @map("customer_note")
   adminNote       String?     @map("admin_note")
 
-  items         OrderItem[]
-  payment       Payment?
-  statusHistory OrderStatusHistory[]
+  items          OrderItem[]
+  payment        Payment?
+  statusHistory  OrderStatusHistory[]
+  returnRequests ReturnRequest[]
 
   confirmedAt DateTime? @map("confirmed_at")
   shippedAt   DateTime? @map("shipped_at")
@@ -475,4 +499,475 @@ model Setting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("settings")
+}
+
+// ============================================
+// WISHLISTS
+// ============================================
+
+model Wishlist {
+  id     String         @id @default(cuid())
+  userId String         @unique @map("user_id")
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  WishlistItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  wishlistId String   @map("wishlist_id")
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  productId  String   @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  addedAt    DateTime @default(now()) @map("added_at")
+
+  @@unique([wishlistId, productId])
+  @@index([productId])
+  @@map("wishlist_items")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String             @map("user_id")
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  status    NotificationStatus @default(PENDING)
+  subject   String?
+  body      String
+  metadata  Json?
+  readAt    DateTime?          @map("read_at")
+  sentAt    DateTime?          @map("sent_at")
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================================
+// STOCK ALERTS (Back in Stock)
+// ============================================
+
+model StockAlert {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId  String   @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId  String?  @map("variant_id")
+  variant    ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  notified   Boolean  @default(false)
+  notifiedAt DateTime? @map("notified_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, productId, variantId])
+  @@index([productId, notified])
+  @@map("stock_alerts")
+}
+
+// ============================================
+// SOCIAL LOGIN
+// ============================================
+
+model SocialAccount {
+  id         String @id @default(cuid())
+  userId     String @map("user_id")
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider   String // "google", "facebook"
+  providerId String @map("provider_id")
+  email      String?
+  name       String?
+  avatar     String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@map("social_accounts")
+}
+
+// ============================================
+// TWO-FACTOR AUTHENTICATION
+// ============================================
+
+model TwoFactorAuth {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secret      String
+  isEnabled   Boolean  @default(false) @map("is_enabled")
+  backupCodes Json?    @map("backup_codes")
+  verifiedAt  DateTime? @map("verified_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("two_factor_auth")
+}
+
+// ============================================
+// RETURNS / RMA
+// ============================================
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  SHIPPED_BACK
+  RECEIVED
+  REFUNDED
+  CLOSED
+}
+
+enum ReturnReason {
+  DEFECTIVE
+  WRONG_ITEM
+  NOT_AS_DESCRIBED
+  CHANGED_MIND
+  DAMAGED_IN_SHIPPING
+  OTHER
+}
+
+model ReturnRequest {
+  id           String       @id @default(cuid())
+  orderId      String       @map("order_id")
+  order        Order        @relation(fields: [orderId], references: [id])
+  userId       String       @map("user_id")
+  user         User         @relation(fields: [userId], references: [id])
+  status       ReturnStatus @default(REQUESTED)
+  reason       ReturnReason
+  description  String?
+  images       Json?
+  adminNote    String?      @map("admin_note")
+  refundAmount Decimal?     @map("refund_amount") @db.Decimal(12, 2)
+  trackingNumber String?    @map("tracking_number")
+
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@map("return_requests")
+}
+
+// ============================================
+// GIFT CARDS
+// ============================================
+
+enum GiftCardStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  DISABLED
+}
+
+model GiftCard {
+  id              String         @id @default(cuid())
+  code            String         @unique
+  initialBalance  Decimal        @map("initial_balance") @db.Decimal(12, 2)
+  currentBalance  Decimal        @map("current_balance") @db.Decimal(12, 2)
+  currency        String         @default("DZD")
+  status          GiftCardStatus @default(ACTIVE)
+  purchasedById   String?        @map("purchased_by_id")
+  purchasedBy     User?          @relation("GiftCardPurchaser", fields: [purchasedById], references: [id])
+  redeemedById    String?        @map("redeemed_by_id")
+  redeemedBy      User?          @relation("GiftCardRedeemer", fields: [redeemedById], references: [id])
+  recipientEmail  String?        @map("recipient_email")
+  recipientName   String?        @map("recipient_name")
+  message         String?
+  expiresAt       DateTime?      @map("expires_at")
+
+  transactions GiftCardTransaction[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([code])
+  @@index([status])
+  @@map("gift_cards")
+}
+
+model GiftCardTransaction {
+  id         String   @id @default(cuid())
+  giftCardId String   @map("gift_card_id")
+  giftCard   GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+  amount     Decimal  @db.Decimal(12, 2)
+  type       String   // "PURCHASE", "REDEMPTION", "REFUND"
+  orderId    String?  @map("order_id")
+  note       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([giftCardId])
+  @@map("gift_card_transactions")
+}
+
+// ============================================
+// LOYALTY POINTS
+// ============================================
+
+model LoyaltyAccount {
+  id            String @id @default(cuid())
+  userId        String @unique @map("user_id")
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalPoints   Int    @default(0) @map("total_points")
+  currentPoints Int    @default(0) @map("current_points")
+  tier          String @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
+
+  transactions LoyaltyTransaction[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("loyalty_accounts")
+}
+
+model LoyaltyTransaction {
+  id        String         @id @default(cuid())
+  accountId String         @map("account_id")
+  account   LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  points    Int
+  type      String // "EARN", "REDEEM", "EXPIRE", "ADJUST"
+  source    String? // "ORDER", "REVIEW", "REFERRAL", "ADMIN"
+  orderId   String? @map("order_id")
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([accountId])
+  @@map("loyalty_transactions")
+}
+
+// ============================================
+// NEWSLETTER
+// ============================================
+
+model NewsletterSubscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  firstName    String?  @map("first_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  source       String?  // "CHECKOUT", "POPUP", "FOOTER", "API"
+  confirmedAt  DateTime? @map("confirmed_at")
+  unsubscribedAt DateTime? @map("unsubscribed_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([isActive])
+  @@map("newsletter_subscribers")
+}
+
+// ============================================
+// PRODUCT BUNDLES
+// ============================================
+
+model ProductBundle {
+  id            String  @id @default(cuid())
+  slug          String  @unique
+  nameAr        String  @map("name_ar")
+  nameFr        String  @map("name_fr")
+  nameEn        String  @map("name_en")
+  descriptionAr String? @map("description_ar")
+  descriptionFr String? @map("description_fr")
+  descriptionEn String? @map("description_en")
+  price         Decimal @db.Decimal(12, 2) // Bundle price (less than sum of items)
+  comparePrice  Decimal? @map("compare_price") @db.Decimal(12, 2) // Sum of individual prices
+  image         String?
+  isActive      Boolean @default(true) @map("is_active")
+
+  items BundleItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("product_bundles")
+}
+
+model BundleItem {
+  id        String        @id @default(cuid())
+  bundleId  String        @map("bundle_id")
+  bundle    ProductBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  productId String        @map("product_id")
+  product   Product       @relation(fields: [productId], references: [id])
+  quantity  Int           @default(1)
+
+  @@unique([bundleId, productId])
+  @@map("bundle_items")
+}
+
+// ============================================
+// SUBSCRIPTIONS
+// ============================================
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+enum SubscriptionInterval {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model Subscription {
+  id           String               @id @default(cuid())
+  userId       String               @map("user_id")
+  user         User                 @relation(fields: [userId], references: [id])
+  productId    String               @map("product_id")
+  product      Product              @relation(fields: [productId], references: [id])
+  variantId    String?              @map("variant_id")
+  variant      ProductVariant?      @relation(fields: [variantId], references: [id])
+  quantity     Int                  @default(1)
+  interval     SubscriptionInterval
+  status       SubscriptionStatus   @default(ACTIVE)
+  price        Decimal              @db.Decimal(12, 2)
+  addressId    String               @map("address_id")
+  nextOrderAt  DateTime             @map("next_order_at")
+  lastOrderAt  DateTime?            @map("last_order_at")
+  cancelledAt  DateTime?            @map("cancelled_at")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status, nextOrderAt])
+  @@map("subscriptions")
+}
+
+// ============================================
+// MULTI-VENDOR
+// ============================================
+
+enum VendorStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+  REJECTED
+}
+
+model Vendor {
+  id            String       @id @default(cuid())
+  userId        String       @unique @map("user_id")
+  user          User         @relation(fields: [userId], references: [id])
+  storeName     String       @map("store_name")
+  storeNameAr   String?      @map("store_name_ar")
+  slug          String       @unique
+  description   String?
+  logo          String?
+  banner        String?
+  phone         String?
+  email         String?
+  address       String?
+  wilayaId      Int?         @map("wilaya_id")
+  status        VendorStatus @default(PENDING)
+  commissionRate Decimal     @default(10) @map("commission_rate") @db.Decimal(5, 2) // percentage
+  rating        Decimal      @default(0) @db.Decimal(3, 2)
+  totalSales    Int          @default(0) @map("total_sales")
+
+  products VendorProduct[]
+
+  approvedAt DateTime? @map("approved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("vendors")
+}
+
+model VendorProduct {
+  id        String  @id @default(cuid())
+  vendorId  String  @map("vendor_id")
+  vendor    Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([vendorId, productId])
+  @@map("vendor_products")
+}
+
+// ============================================
+// WEBHOOK SYSTEM
+// ============================================
+
+model WebhookEndpoint {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url       String
+  secret    String
+  events    Json     // ["order.created", "payment.received", etc.]
+  isActive  Boolean  @default(true) @map("is_active")
+  failCount Int      @default(0) @map("fail_count")
+  lastError String?  @map("last_error")
+
+  deliveries WebhookDelivery[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id         String @id @default(cuid())
+  endpointId String @map("endpoint_id")
+  endpoint   WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  event      String
+  payload    Json
+  statusCode Int?   @map("status_code")
+  response   String?
+  success    Boolean @default(false)
+  attempts   Int     @default(1)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([endpointId])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?  @map("user_id")
+  action     String   // "CREATE", "UPDATE", "DELETE"
+  entity     String   // "product", "order", "user", etc.
+  entityId   String?  @map("entity_id")
+  changes    Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
