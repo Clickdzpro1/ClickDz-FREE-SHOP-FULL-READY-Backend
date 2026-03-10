@@ -1,10 +1,13 @@
 # ClickDz FREE SHOP Backend
 
-A production-ready, open-source e-commerce backend built specifically for the **Algerian market**. Clone it, run `docker compose up`, and you have a fully functional shop with all 58 wilayas, 5 payment gateways, 4 courier integrations, and a complete admin API.
+A production-ready, open-source e-commerce backend built specifically for the **Algerian market**. Clone it, run `docker compose up`, and you have a fully functional shop with all 58 wilayas, 5 payment gateways, 4 courier integrations, multi-vendor marketplace, and a complete admin API with **22+ features**.
+
+> **Interactive API Docs**: Once running, visit `/api/docs` for full Swagger/OpenAPI documentation.
 
 ## Features
 
-- **Algeria-Ready**: All 58 wilayas + communes, DZD currency, Algerian phone format
+### Core Commerce
+- **Algeria-Ready**: All 58 wilayas + 1541 communes, DZD currency, Algerian phone format
 - **5 Payment Gateways**: Chargily (EDAHABIA/CIB), SlickPay, Stripe, CCP/BaridiMob, Cash on Delivery
 - **4 Shipping Providers**: Yalidine, ZR Express, EMS Poste Algerie, Maystro + Manual
 - **Full Auth System**: JWT with refresh token rotation, role-based access (Customer/Admin/Super Admin)
@@ -13,6 +16,28 @@ A production-ready, open-source e-commerce backend built specifically for the **
 - **Admin Dashboard**: Revenue stats, customer management, order export (CSV), shipping rate management
 - **Trilingual**: Arabic, French, English on products and categories
 - **Review System**: Customer reviews with admin moderation
+
+### Extended Features (22+)
+- **Wishlist**: Save products for later with add/remove/check/clear
+- **Notifications**: In-app notification system with mark-as-read
+- **Stock Alerts**: Subscribe to back-in-stock notifications
+- **Two-Factor Authentication (2FA)**: TOTP-based with QR code setup and backup codes
+- **Swagger/OpenAPI**: Interactive API docs at `/api/docs` with 28 endpoint groups
+- **Social Login**: Link/unlink social accounts (Google, Facebook, etc.)
+- **Product Recommendations**: "Also bought", similar products, personalized suggestions
+- **Returns & RMA**: Full return request lifecycle with admin management
+- **Gift Cards**: Purchase, redeem, check balance, transaction history
+- **Loyalty Program**: Points system with tier progression (Bronze/Silver/Gold/Platinum)
+- **Bulk Operations**: Mass update prices, stock, order statuses; product import
+- **Product Bundles**: Discounted product bundles with CRUD
+- **Newsletter**: Email subscription management with stats and CSV export
+- **Subscriptions**: Recurring order subscriptions (weekly/biweekly/monthly/quarterly/yearly)
+- **Multi-Vendor Marketplace**: Vendor applications, store profiles, commission management
+- **Full-Text Search**: Trilingual search across products with autocomplete suggestions
+- **Redis Caching**: High-performance caching layer with configurable TTL
+- **Audit Logs**: Complete activity trail for admin actions
+- **Webhook System**: Outgoing webhooks with HMAC signatures and delivery tracking
+- **Audit Log Middleware**: Non-blocking fire-and-forget action logging
 - **Docker Ready**: One command to run the entire stack
 
 ## Tech Stack
@@ -25,6 +50,8 @@ A production-ready, open-source e-commerce backend built specifically for the **
 | Cache | Redis 7 |
 | Auth | JWT (access + refresh tokens) |
 | Validation | Zod |
+| API Docs | Swagger/OpenAPI 3.0 |
+| 2FA | TOTP (otplib) |
 | Container | Docker + Docker Compose |
 | Package Manager | pnpm |
 
@@ -34,8 +61,8 @@ A production-ready, open-source e-commerce backend built specifically for the **
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/ClickDz-FREE-SHOP-Backend.git
-cd ClickDz-FREE-SHOP-Backend
+git clone https://github.com/Clickdzpro1/ClickDz-FREE-SHOP-FULL-READY-Backend.git
+cd ClickDz-FREE-SHOP-FULL-READY-Backend
 
 # Copy environment file
 cp .env.example .env
@@ -46,6 +73,7 @@ docker compose up -d
 # The API is now running at http://localhost:3000
 # Health check: http://localhost:3000/health
 # API base: http://localhost:3000/api/v1
+# Swagger docs: http://localhost:3000/api/docs
 ```
 
 ### Option 2: Local Development
@@ -141,6 +169,90 @@ pnpm dev
 | GET | `/api/v1/shipping/rates/:wilayaCode` | Get rates for wilaya |
 | GET | `/api/v1/shipping/track/:orderId` | Track shipment |
 
+### Wishlist
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/wishlist` | Get my wishlist |
+| POST | `/api/v1/wishlist/items` | Add item |
+| DELETE | `/api/v1/wishlist/items/:productId` | Remove item |
+| DELETE | `/api/v1/wishlist` | Clear wishlist |
+| GET | `/api/v1/wishlist/check/:productId` | Check if item in wishlist |
+
+### Search
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/search` | Full-text product search |
+| GET | `/api/v1/search/suggest` | Autocomplete suggestions |
+| GET | `/api/v1/search/categories` | Search categories |
+
+### Recommendations
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/recommendations/also-bought/:productId` | Frequently bought together |
+| GET | `/api/v1/recommendations/similar/:productId` | Similar products |
+| GET | `/api/v1/recommendations/personalized` | Personalized for user |
+
+### Gift Cards
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/gift-cards` | Purchase gift card |
+| POST | `/api/v1/gift-cards/redeem` | Redeem gift card |
+| GET | `/api/v1/gift-cards/balance/:code` | Check balance |
+| GET | `/api/v1/gift-cards/my` | My gift cards |
+
+### Loyalty Program
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/loyalty/balance` | Points balance & tier |
+| POST | `/api/v1/loyalty/redeem` | Redeem points |
+| GET | `/api/v1/loyalty/history` | Transaction history |
+
+### Subscriptions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/subscriptions` | Create subscription |
+| GET | `/api/v1/subscriptions` | My subscriptions |
+| POST | `/api/v1/subscriptions/:id/pause` | Pause |
+| POST | `/api/v1/subscriptions/:id/resume` | Resume |
+| POST | `/api/v1/subscriptions/:id/cancel` | Cancel |
+
+### Returns
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/returns` | Create return request |
+| GET | `/api/v1/returns` | My returns |
+| GET | `/api/v1/returns/:id` | Return detail |
+
+### Vendors (Multi-Vendor Marketplace)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/vendors/apply` | Apply as vendor |
+| GET | `/api/v1/vendors/stores` | List public stores |
+| GET | `/api/v1/vendors/stores/:slug` | Store detail |
+| GET | `/api/v1/vendors/me` | My vendor profile |
+
+### Two-Factor Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/2fa/setup` | Generate 2FA secret + QR |
+| POST | `/api/v1/2fa/verify` | Verify & enable 2FA |
+| POST | `/api/v1/2fa/disable` | Disable 2FA |
+
+### Notifications
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/notifications` | Get notifications |
+| PATCH | `/api/v1/notifications/:id/read` | Mark as read |
+| POST | `/api/v1/notifications/read-all` | Mark all read |
+
+### Webhooks
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/webhooks` | Create webhook endpoint |
+| GET | `/api/v1/webhooks` | List endpoints |
+| PATCH | `/api/v1/webhooks/:id` | Update endpoint |
+| DELETE | `/api/v1/webhooks/:id` | Delete endpoint |
+
 ### Admin
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -153,6 +265,11 @@ pnpm dev
 | POST | `/api/v1/payments/confirm/:orderId` | Confirm manual payment |
 | POST | `/api/v1/payments/reject/:orderId` | Reject manual payment |
 | POST | `/api/v1/shipping/shipments/:orderId` | Create shipment |
+| POST | `/api/v1/admin/bulk/products/prices` | Bulk update prices |
+| POST | `/api/v1/admin/bulk/products/stock` | Bulk update stock |
+| POST | `/api/v1/admin/bulk/products/import` | Bulk import products |
+| POST | `/api/v1/admin/bulk/orders/status` | Bulk update order status |
+| GET | `/api/v1/admin/audit-logs` | View audit logs |
 
 ## Payment Gateways
 
@@ -182,28 +299,40 @@ To add a new shipping provider, create a class implementing `IShippingProvider` 
 
 ```
 src/
-├── config/          # Environment, database, Redis, logger
-├── controllers/     # Request handlers
-├── middleware/       # Auth, validation, rate limiting, uploads
-├── routes/          # Express route definitions
-├── schemas/         # Zod validation schemas
-├── services/        # Business logic
+├── config/          # Environment, database, Redis, logger, Swagger
+├── controllers/     # Request handlers (31 controller files)
+├── middleware/       # Auth, validation, rate limiting, uploads, audit log
+├── routes/          # Express route definitions (31 route files)
+├── schemas/         # Zod validation schemas (20 schema files)
+├── services/        # Business logic (30+ service files)
 │   ├── payment/     # Payment gateway system
 │   │   ├── gateways/    # Chargily, SlickPay, Stripe, CCP, COD
 │   │   ├── payment.interface.ts
 │   │   ├── payment.factory.ts
 │   │   └── payment.service.ts
-│   └── shipping/    # Shipping provider system
-│       ├── providers/   # Yalidine, ZR Express, EMS, Maystro, Manual
-│       ├── shipping.interface.ts
-│       ├── shipping.factory.ts
-│       └── shipping.service.ts
+│   ├── shipping/    # Shipping provider system
+│   │   ├── providers/   # Yalidine, ZR Express, EMS, Maystro, Manual
+│   │   ├── shipping.interface.ts
+│   │   ├── shipping.factory.ts
+│   │   └── shipping.service.ts
+│   ├── wishlist.service.ts
+│   ├── notification.service.ts
+│   ├── giftCard.service.ts
+│   ├── loyalty.service.ts
+│   ├── subscription.service.ts
+│   ├── vendor.service.ts
+│   ├── webhook.service.ts
+│   ├── search.service.ts
+│   ├── cache.service.ts
+│   ├── auditLog.service.ts
+│   ├── bulk.service.ts
+│   └── ... (and more)
 ├── types/           # TypeScript type definitions
 ├── utils/           # Helpers (JWT, pagination, phone format, etc.)
 ├── app.ts           # Express app assembly
 └── server.ts        # Server entry point
 prisma/
-├── schema.prisma    # Database schema (17 models)
+├── schema.prisma    # Database schema (35+ models)
 └── seed/            # Seed data (wilayas, communes, products, admin)
 ```
 
